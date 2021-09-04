@@ -1,0 +1,73 @@
+Problem: Count no.of contacts associated with account and store the count in a field on accunt records. The count should be dynamic, i.e, should get updated each time a contact is created/deleted.
+
+
+solution:  inspired by 'Prashant Veer Singh- The Salesforce Lover' 
+Way 1) Use aggregate function
+trigger CountContact on contact(after insert,after delete){
+Set<Id> storeAccIdSet=new Set<Id> ();
+List<Account> accToUpdateList=new List<Account>();
+if(Trigger.isExecuting && Triger.isAfter()){
+	if(Trigger.isDelete){
+		for(Contact ct: Trigger.old){
+			storeAccIdSet.add(ct.AccountId);
+		}
+	}
+	else if(Trigger.isInsert){ //not delete
+	for(contact ct: Trigger.new){
+		storeAccIdSet.add(ct.AccountId);
+	}
+	}
+	
+	AggregateResult[] exstngConsPerAccount=[SELECT count(Id) cid,Account  FROM Contact where AccountId=:storeAccIdSet group by AccountId];
+	
+	if(exstngConsPerAccount!=null && exstngConsPerAccount.size()>0){
+		for(AggregateResult ar: exstngConsPerAccount){
+			Id accId=(String)ar.get(Account);
+			Integer contactsCount=(Integer)ar.get('cid');
+			
+			Account acc=new Account();
+			acct.CountOfContacts__c=contactsCount;
+			accToUpdateList.add(acc);
+		}
+	}
+	if(accToUpdateList.size()>0){
+		update accToUpdateList;		
+		
+	}
+	
+}
+}
+---------------------
+way2: Use subquery
+
+trigger CountContact on contact(after insert,after delete){
+Set<Id> storeAccIdSet=new Set<Id> ();
+List<Account> accToUpdateList=new List<Account>();
+if(Trigger.isExecuting && Triger.isAfter()){
+	if(Trigger.isDelete){
+		for(Contact ct: Trigger.old){
+			storeAccIdSet.add(ct.AccountId);
+		}
+	}
+	else if(Trigger.isInsert){ //not delete
+	for(contact ct: Trigger.new){
+		storeAccIdSet.add(ct.AccountId);
+	}
+	}
+	
+	List<Account> accList=[select Id,(select Id from Contacts) FROM Account where Id IN : storeAccIdSet];
+	if(!accList.isEmpty()){
+		for(Account acc:accList){
+			Integer countOfContacts=acc.Contacts.size();
+			acc.CountOfContacts__c=countOfContacts;
+			accToUpdateList.add(acc);
+			
+		}//fr ends here
+		
+		if(accToUpdateList.size()>0){
+		update accToUpdateList;		
+		
+	}
+		
+		
+	}
