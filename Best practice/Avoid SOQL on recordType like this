@@ -1,0 +1,28 @@
+
+SOQL queries made on recordType can be  avoided by replacing them with SObjectType.<object API>.getRecordTypeInfosByDeveloperName().get(‘<recordtype developer name>’).getRecordTypeId();
+
+
+
+e.g for CustomObject__c object.
+
+/** Old Approach : Using SOQL Queries **/
+ Id soqlId=[ Select id from RecordType where sObjectType = 'CustomObject__c' and developerName ='IV_A_TANF'].Id;
+ system.debug('--soqlId--'+soqlId);
+
+
+/** New Approach: without soql **/  
+Create below generic method in the utilities class. CS_Util
+public static String getSObjectRecTypeId(String objectAPI,String recType){
+
+SObject obj = (SObject) Type.forName(objectAPI).newInstance();
+DescribeSObjectResult describe = obj.getSObjectType().getDescribe();
+
+        return  describe.getRecordTypeInfosByDeveloperName().get(recType).getRecordTypeId(); //getRecordTypeInfosByDeveloperName
+    }
+
+Call as below from the other classes wherever recordtype is being queried. 
+String accountRec=<utility class>.getSObjectRecTypeId('CustomObject__c','IV_A_TANF'); //calling
+
+system.debug('--accountRec--'+accountRec);
+
+# AccountRec and soqlId returns same .
