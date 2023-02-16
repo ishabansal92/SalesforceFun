@@ -1,0 +1,2 @@
+Check profiles which have a custom permission labelled 'zAgileConnect Use Integration user' assigned
+SELECT Parent.Label,Parent.name,parent.type,parent.profileid,SetupEntityId,SetupEntityType FROM SetupEntityAccess WHERE SetupEntityId in (SELECT Id FROM CustomPermission where MasterLabel = 'zAgileConnect Use Integration user')
